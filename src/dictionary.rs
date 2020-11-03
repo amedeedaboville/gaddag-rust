@@ -1,16 +1,18 @@
 use crate::utils::to_word;
 use crate::utils::ALPH;
-use indicatif::ProgressBar;
-use indicatif::ProgressIterator;
+#[cfg(feature = "with_std")]
+use indicatif::{ProgressBar, ProgressIterator};
 use petgraph::graph::{Edges, NodeIndex};
 use petgraph::visit::EdgeRef;
 use petgraph::Direction;
 use petgraph::{Directed, Graph}; // todo use daggy?
+#[cfg(feature = "with_std")]
 use rayon::prelude::*;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+//todo make it work without the file system in no_std mode
+//#[cfg(feature = "with_std")]
 use std::fs;
 
 fn load_from_file<T: DeserializeOwned + Serialize>(file: &str, callback: fn() -> T) -> T {
@@ -48,7 +50,13 @@ impl Dictionary {
                 words: HashMap::new(),
                 leaves: HashMap::new(),
             };
-            for i in ALPH.chars().progress() {
+
+            #[cfg(feature = "with_std")]
+            let alph_iter = ALPH.chars().progress();
+            #[cfg(not(feature = "with_std"))]
+            let alph_iter = ALPH.chars();
+
+            for i in alph_iter {
                 if i == '?' {
                     continue;
                 }
@@ -72,6 +80,7 @@ impl Dictionary {
                 dict.words.insert(i, sub);
             }
 
+            #[cfg(feature = "with_std")]
             let bar = ProgressBar::new(40);
 
             dict.leaves = fs::read_to_string("resources/leaves.txt")
@@ -79,7 +88,10 @@ impl Dictionary {
                 .lines()
                 .map(String::from)
                 .collect::<Vec<String>>()
+                #[cfg(feature = "with_std")]
                 .par_iter()
+                #[cfg(not(feature = "with_std"))]
+                .iter()
                 .map(|line| {
                     let s: Vec<&str> = line.split(" ").collect();
                     let word = to_word(&s[0].chars().collect());
@@ -94,6 +106,7 @@ impl Dictionary {
                 ],
                 0.0,
             );
+            #[cfg(feature = "with_std")]
             bar.finish();
 
             dict
@@ -142,7 +155,12 @@ impl Trie {
 
             let dummy = extend(&mut trie, current, '#');
 
-            for i in ALPH.chars().progress() {
+            #[cfg(feature = "with_std")]
+            let alph_iter = ALPH.chars().progress();
+            #[cfg(not(feature = "with_std"))]
+            let alph_iter = ALPH.chars();
+
+            for i in alph_iter {
                 if i == '?' {
                     continue;
                 }
