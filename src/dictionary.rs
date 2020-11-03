@@ -85,14 +85,11 @@ impl Dictionary {
 
             let bar = ProgressBar::new(40);
 
-            let leaves = fs::read_to_string("resources/leaves.txt")
+            dict.leaves = fs::read_to_string("resources/leaves.txt")
                 .expect("No leaves file")
                 .lines()
                 .map(String::from)
-                .collect::<Vec<String>>();
-
-
-            dict.leaves = leaves
+                .collect::<Vec<String>>()
                 .par_iter()
                 .map(|line| {
                     let s: Vec<&str> = line.split(" ").collect();
