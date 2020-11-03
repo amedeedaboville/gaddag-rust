@@ -8,13 +8,15 @@ use petgraph::Direction;
 use petgraph::{Directed, Graph}; // todo use daggy?
 #[cfg(feature = "with_std")]
 use rayon::prelude::*;
+#[cfg(feature = "with_std")]
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 //todo make it work without the file system in no_std mode
-//#[cfg(feature = "with_std")]
+#[cfg(feature = "with_std")]
 use std::fs;
 
+#[cfg(feature = "with_std")]
 fn load_from_file<T: DeserializeOwned + Serialize>(file: &str, callback: fn() -> T) -> T {
     match fs::read(file) {
         Ok(b) => {
@@ -44,6 +46,7 @@ pub struct Dictionary {
 }
 
 impl Dictionary {
+    #[cfg(feature = "with_std")]
     pub fn default() -> Dictionary {
         load_from_file("dict.ser", || {
             let mut dict = Dictionary {
@@ -51,12 +54,7 @@ impl Dictionary {
                 leaves: HashMap::new(),
             };
 
-            #[cfg(feature = "with_std")]
-            let alph_iter = ALPH.chars().progress();
-            #[cfg(not(feature = "with_std"))]
-            let alph_iter = ALPH.chars();
-
-            for i in alph_iter {
+            for i in ALPH.chars().progress() {
                 if i == '?' {
                     continue;
                 }
@@ -80,7 +78,6 @@ impl Dictionary {
                 dict.words.insert(i, sub);
             }
 
-            #[cfg(feature = "with_std")]
             let bar = ProgressBar::new(40);
 
             let leaves = fs::read_to_string("resources/leaves.txt")
@@ -89,12 +86,9 @@ impl Dictionary {
                 .map(String::from)
                 .collect::<Vec<String>>();
 
-                #[cfg(feature = "with_std")]
-                let leaves_iter = leaves.par_iter();
-                #[cfg(not(feature = "with_std"))]
-                let leaves_iter = leaves.iter();
 
-            dict.leaves = leaves_iter
+            dict.leaves = leaves
+                .par_iter()
                 .map(|line| {
                     let s: Vec<&str> = line.split(" ").collect();
                     let word = to_word(&s[0].chars().collect());
@@ -109,7 +103,6 @@ impl Dictionary {
                 ],
                 0.0,
             );
-            #[cfg(feature = "with_std")]
             bar.finish();
 
             dict
@@ -138,6 +131,7 @@ pub struct Trie {
 }
 
 impl Trie {
+    #[cfg(feature = "with_std")]
     pub fn default() -> Trie {
         load_from_file("trie.ser", || {
             let mut graph = Graph::new();
@@ -158,12 +152,7 @@ impl Trie {
 
             let dummy = extend(&mut trie, current, '#');
 
-            #[cfg(feature = "with_std")]
-            let alph_iter = ALPH.chars().progress();
-            #[cfg(not(feature = "with_std"))]
-            let alph_iter = ALPH.chars();
-
-            for i in alph_iter {
+            for i in ALPH.chars().progress() {
                 if i == '?' {
                     continue;
                 }
