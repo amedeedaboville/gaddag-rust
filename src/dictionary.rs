@@ -46,6 +46,11 @@ pub struct Dictionary {
 }
 
 impl Dictionary {
+    #[cfg(not(feature = "with_std"))]
+    pub fn default() -> Dictionary {
+        let bin = include_bytes!("../dict.ser");
+        bincode::deserialize(&b).unwrap()
+    }
     #[cfg(feature = "with_std")]
     pub fn default() -> Dictionary {
         load_from_file("dict.ser", || {
@@ -131,6 +136,11 @@ pub struct Trie {
 }
 
 impl Trie {
+    #[cfg(not(feature = "with_std"))]
+    pub fn default() -> Dictionary {
+        let bin = include_bytes!("../trie.ser");
+        bincode::deserialize(&b).unwrap()
+    }
     #[cfg(feature = "with_std")]
     pub fn default() -> Trie {
         load_from_file("trie.ser", || {
