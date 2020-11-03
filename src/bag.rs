@@ -104,6 +104,7 @@ impl Bag {
         res
     }
 
+    #[cfg(feature = "with_std")]
     pub fn to_str_for_current_player(&self, game: &Game) -> String {
         let mut d = self.distribution.clone();
         for i in game.get_player(((game.current + 1) % 2) as i32).rack.iter() {
