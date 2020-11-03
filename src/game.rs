@@ -273,6 +273,8 @@ impl Game {
         res
     }
 
+    //with_std because bag.with_std uses terminal codes
+    #[cfg(feature = "with_std")]
     pub fn to_str(&mut self) -> String {
         let board = format!("{}", self.board);
         let state = self.states_str();

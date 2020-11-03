@@ -6,6 +6,7 @@ version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
+default = []
 with_std = ["indicatif", "rayon", "gtk", "glib", "gdk", "termion"]
 
 [dependencies]
@@ -25,3 +26,12 @@ relm = "0.20.0"
 relm-derive = "0.20.0"
 serde = {version = "1.0.116", features = ["derive"]}
 termion = {version = "1.5.5", optional = true}
+
+[lib]
+name = "lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "main"
+path = "src/bin.rs"
+required-features = ["with_std"]

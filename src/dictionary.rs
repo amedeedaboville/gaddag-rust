@@ -83,15 +83,18 @@ impl Dictionary {
             #[cfg(feature = "with_std")]
             let bar = ProgressBar::new(40);
 
-            dict.leaves = fs::read_to_string("resources/leaves.txt")
+            let leaves = fs::read_to_string("resources/leaves.txt")
                 .expect("No leaves file")
                 .lines()
                 .map(String::from)
-                .collect::<Vec<String>>()
+                .collect::<Vec<String>>();
+
                 #[cfg(feature = "with_std")]
-                .par_iter()
+                let leaves_iter = leaves.par_iter();
                 #[cfg(not(feature = "with_std"))]
-                .iter()
+                let leaves_iter = leaves.iter();
+
+            dict.leaves = leaves_iter
                 .map(|line| {
                     let s: Vec<&str> = line.split(" ").collect();
                     let word = to_word(&s[0].chars().collect());
