@@ -12,7 +12,6 @@ use rayon::prelude::*;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-//todo make it work without the file system in no_std mode
 #[cfg(feature = "with_std")]
 use std::fs;
 
