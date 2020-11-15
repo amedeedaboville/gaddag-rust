@@ -125,8 +125,27 @@ pub struct Trie {
     pub current: NodeIndex<u32>,
 }
 
+pub trait ITrie<NodeIndexType> {
+    fn default() -> Self where Self: Sized;
+    fn root(&self) -> NodeIndexType;
+    fn seed(&self, initial: &Vec<char>) -> NodeIndexType;
+    fn can_next(&self, current: NodeIndexType, next: char) -> Option<NodeIndexType>;
+    fn nexts(&self, current: NodeIndexType) -> Vec<(char, NodeIndexType)>;
+}
+
 impl Trie {
-    pub fn default() -> Trie {
+    fn hashroot(&self) -> NodeIndex {
+        self.can_next(self.root(), '#').unwrap()
+    }
+
+    // -> [Option<(char, NodeIndex)>; 26]
+    fn _nexts(&self, current: NodeIndex) -> Edges<char, Directed, u32> {
+        self.graph.edges_directed(current, Direction::Outgoing)
+    }
+}
+
+impl ITrie<NodeIndex> for Trie {
+    fn default() -> Trie {
         load_from_file("trie.ser", || {
             let mut graph = Graph::new();
             let current = graph.add_node(' ');
@@ -135,7 +154,7 @@ impl Trie {
             let mut last_node;
 
             let extend = |t: &mut Trie, ln, c| {
-                if let Some(new) = t.follow(ln, c) {
+                if let Some(new) = t.can_next(ln, c) {
                     return new;
                 } else {
                     let next_node = t.graph.add_node(c);
@@ -199,15 +218,11 @@ impl Trie {
         })
     }
 
-    pub fn root(&self) -> NodeIndex {
+    fn root(&self) -> NodeIndex {
         self.graph.node_indices().next().unwrap()
     }
 
-    pub fn hashroot(&self) -> NodeIndex {
-        self.follow(self.root(), '#').unwrap()
-    }
-
-    pub fn seed(&self, initial: &Vec<char>) -> NodeIndex {
+    fn seed(&self, initial: &Vec<char>) -> NodeIndex {
         let edges = self.graph.raw_edges(); // todo: optimize away
         let mut current = self.hashroot();
 
@@ -224,7 +239,7 @@ impl Trie {
         current
     }
 
-    pub fn can_next(&self, current: NodeIndex, next: char) -> Option<NodeIndex> {
+    fn can_next(&self, current: NodeIndex, next: char) -> Option<NodeIndex> {
         let edges = self.graph.raw_edges();
         for a in self.graph.edges_directed(current, Direction::Outgoing) {
             let e = &edges[a.id().index()];
@@ -236,17 +251,7 @@ impl Trie {
         None
     }
 
-    // for readability
-    pub fn follow(&self, current: NodeIndex, next: char) -> Option<NodeIndex> {
-        self.can_next(current, next)
-    }
-
-    // -> [Option<(char, NodeIndex)>; 26]
-    pub fn _nexts(&self, current: NodeIndex) -> Edges<char, Directed, u32> {
-        self.graph.edges_directed(current, Direction::Outgoing)
-    }
-
-    pub fn nexts(&self, current: NodeIndex) -> Vec<(char, NodeIndex)> {
+    fn nexts(&self, current: NodeIndex) -> Vec<(char, NodeIndex)> {
         let edges = self.graph.raw_edges();
         self._nexts(current)
             .map(|a| {

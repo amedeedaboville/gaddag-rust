@@ -1,5 +1,5 @@
 use crate::bag::Bag;
-use crate::dictionary::{IDictionary, Trie, Dictionary};
+use crate::dictionary::{IDictionary, Trie, Dictionary, ITrie};
 use crate::utils::*;
 
 use array_init::array_init;
@@ -29,7 +29,7 @@ fn _as(v: usize) -> i32 {
 pub struct Board {
     state: [[char; 15]; 15],
     dict: Box <dyn IDictionary>,
-    trie: Trie,
+    trie: Box <dyn ITrie<NodeIndex>>,
     pub bag: Bag, // public so can draw tiles
     pub blanks: Vec<Position>,
     cross_checks: [[Vec<char>; 225]; 2],
@@ -96,7 +96,7 @@ impl Board {
     pub fn with_preloads(t: Trie, d: Dictionary) -> Board {
         let mut b = Board {
             state: STATE.clone(),
-            trie: t,
+            trie: Box::new(t),
             dict: Box::new(d),
             bag: Bag::default(),
             blanks: vec![],
@@ -282,7 +282,7 @@ impl Board {
                     // let mut c = self.at_position(curr);
                     // while !"#^+-*.".contains(c) {
                     //     // println!("Following {}", c);
-                    //     if let Some(nnode) = self.trie.follow(node, c) {
+                    //     if let Some(nnode) = self.trie.can_next(node, c) {
                     //         // println!("\tfound");
                     //         node = nnode;
                     //         len += 1;
@@ -307,7 +307,7 @@ impl Board {
                     }
 
                     // if len > 1 {
-                    //     if let Some(_terminal) = self.trie.follow(node, '@') {
+                    //     if let Some(_terminal) = self.trie.can_next(node, '@') {
                     //         // println!("\t terminal");
                     //     } else {
                     //         // println!("\t not terminal");
@@ -697,7 +697,7 @@ impl Board {
         */
 
         // Check if this is a valid left part; if it is, extend right.
-        if let Some(seed) = self.trie.follow(node, '#') {
+        if let Some(seed) = self.trie.can_next(node, '#') {
             self.extend_right(
                 &part,
                 seed,
@@ -740,7 +740,7 @@ impl Board {
 
                             if !self.is_letter(ccp) {
                                 // final check to confirm we won't hit a letter
-                                if let Some(nnode) = self.trie.follow(node, next) {
+                                if let Some(nnode) = self.trie.can_next(node, next) {
                                     // see if it can form a valid left part
                                     // recurse
                                     self.left_part(
@@ -919,7 +919,7 @@ impl Board {
 
             let nword = &(word.to_owned() + &next.to_string());
 
-            if let Some(next_node) = self.trie.follow(node, next) {
+            if let Some(next_node) = self.trie.can_next(node, next) {
                 if npp.tick(direction) {
                     // try to extend right
                     self.extend_right(
