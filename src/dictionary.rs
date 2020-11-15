@@ -34,15 +34,19 @@ fn load_from_file<T: DeserializeOwned + Serialize>(file: &str, callback: fn() ->
         }
     }
 }
-
+pub trait IDictionary {
+    fn default() -> Self where Self: Sized;
+    fn check_word(&self, word: &String) -> bool;
+    fn evaluate(&self, rack: &Vec<usize>) -> Option<&f32>;
+}
 #[derive(Deserialize, Serialize)]
 pub struct Dictionary {
     words: HashMap<char, HashMap<char, HashSet<String>>>,
     leaves: HashMap<Vec<usize>, f32>,
 }
 
-impl Dictionary {
-    pub fn default() -> Dictionary {
+impl IDictionary for Dictionary {
+    fn default() -> Dictionary {
         load_from_file("dict.ser", || {
             let mut dict = Dictionary {
                 words: HashMap::new(),
@@ -100,7 +104,7 @@ impl Dictionary {
         })
     }
 
-    pub fn check_word(&self, word: &String) -> bool {
+    fn check_word(&self, word: &String) -> bool {
         let mut chars = word.chars();
         if let Some(c1) = chars.next() {
             if let Some(c2) = chars.next() {
@@ -110,7 +114,7 @@ impl Dictionary {
         false
     }
 
-    pub fn evaluate(&self, rack: &Vec<usize>) -> Option<&f32> {
+    fn evaluate(&self, rack: &Vec<usize>) -> Option<&f32> {
         self.leaves.get(rack)
     }
 }

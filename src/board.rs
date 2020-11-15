@@ -1,6 +1,5 @@
 use crate::bag::Bag;
-use crate::dictionary::Dictionary;
-use crate::dictionary::Trie;
+use crate::dictionary::{IDictionary, Trie, Dictionary};
 use crate::utils::*;
 
 use array_init::array_init;
@@ -29,7 +28,7 @@ fn _as(v: usize) -> i32 {
 
 pub struct Board {
     state: [[char; 15]; 15],
-    dict: Dictionary,
+    dict: Box <dyn IDictionary>,
     trie: Trie,
     pub bag: Bag, // public so can draw tiles
     pub blanks: Vec<Position>,
@@ -98,7 +97,7 @@ impl Board {
         let mut b = Board {
             state: STATE.clone(),
             trie: t,
-            dict: d,
+            dict: Box::new(d),
             bag: Bag::default(),
             blanks: vec![],
             cross_checks: [array_init(|_| Vec::new()), array_init(|_| Vec::new())],
