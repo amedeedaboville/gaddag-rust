@@ -10,7 +10,6 @@ use rayon::prelude::*;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::fs;
 
 fn load_from_file<T: DeserializeOwned + Serialize>(file: &str, callback: fn() -> T) -> T {
@@ -36,12 +35,10 @@ fn load_from_file<T: DeserializeOwned + Serialize>(file: &str, callback: fn() ->
 }
 pub trait IDictionary {
     fn default() -> Self where Self: Sized;
-    fn check_word(&self, word: &String) -> bool;
     fn evaluate(&self, rack: &Vec<usize>) -> Option<&f32>;
 }
 #[derive(Deserialize, Serialize)]
 pub struct Dictionary {
-    words: HashMap<char, HashMap<char, HashSet<String>>>,
     leaves: HashMap<Vec<usize>, f32>,
 }
 
@@ -49,33 +46,8 @@ impl IDictionary for Dictionary {
     fn default() -> Dictionary {
         load_from_file("dict.ser", || {
             let mut dict = Dictionary {
-                words: HashMap::new(),
                 leaves: HashMap::new(),
             };
-            for i in ALPH.chars().progress() {
-                if i == '?' {
-                    continue;
-                }
-                let mut sub: HashMap<char, HashSet<String>> = HashMap::new();
-
-                for j in ALPH.chars() {
-                    if j == '?' {
-                        continue;
-                    }
-                    let dipth: String = i.to_string() + &j.to_string();
-                    let filepath = format!("resources/{}.txt", dipth);
-
-                    let words = fs::read_to_string(filepath)
-                        .expect(&dipth)
-                        .lines()
-                        .map(String::from)
-                        .collect();
-
-                    sub.insert(j, words);
-                }
-                dict.words.insert(i, sub);
-            }
-
             let bar = ProgressBar::new(40);
 
             dict.leaves = fs::read_to_string("resources/leaves.txt")
@@ -104,16 +76,6 @@ impl IDictionary for Dictionary {
         })
     }
 
-    fn check_word(&self, word: &String) -> bool {
-        let mut chars = word.chars();
-        if let Some(c1) = chars.next() {
-            if let Some(c2) = chars.next() {
-                return self.words[&c1][&c2].contains(word);
-            }
-        }
-        false
-    }
-
     fn evaluate(&self, rack: &Vec<usize>) -> Option<&f32> {
         self.leaves.get(rack)
     }
@@ -131,6 +93,7 @@ pub trait ITrie<NodeIndexType> {
     fn seed(&self, initial: &Vec<char>) -> NodeIndexType;
     fn can_next(&self, current: NodeIndexType, next: char) -> Option<NodeIndexType>;
     fn nexts(&self, current: NodeIndexType) -> Vec<(char, NodeIndexType)>;
+    fn check_word(&self, word: &String) -> bool;
 }
 
 impl Trie {
@@ -259,5 +222,17 @@ impl ITrie<NodeIndex> for Trie {
                 (e.weight, e.target())
             })
             .collect()
+    }
+
+    fn check_word(&self, word: &String) -> bool {
+        let mut current_node = self.hashroot();
+        for current_char in word.chars() {
+            if let Some(next_node) = self.can_next(current_node, current_char) {
+                current_node = next_node;
+            } else {
+                return false;
+            }
+        }
+        self.can_next(current_node, '@').is_some()
     }
 }

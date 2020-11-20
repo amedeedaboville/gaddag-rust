@@ -301,7 +301,7 @@ impl Board {
                     }
 
                     if word.len() > 1 {
-                        if !self.dict.check_word(&word) {
+                        if !self.trie.check_word(&word) {
                             return false;
                         }
                     }
