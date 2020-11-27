@@ -6,6 +6,7 @@ use crate::utils::*;
 use array_init::array_init;
 use itertools::Itertools;
 use petgraph::graph::NodeIndex;
+#[cfg(feature = "with_std")]
 use termion::color;
 
 use std::collections::HashSet;
@@ -1046,6 +1047,7 @@ impl Board {
         score
     }
 
+    #[cfg(feature = "with_std")]
     pub fn to_termion(&self) -> String {
         let sep = "-".repeat(66);
 

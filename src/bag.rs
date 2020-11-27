@@ -3,6 +3,7 @@ use crate::utils::*;
 use rand::seq::SliceRandom;
 use std::collections::HashMap;
 use std::vec::Vec;
+#[cfg(feature = "with_std")]
 use termion::color;
 
 #[derive(Debug)]
@@ -79,6 +80,8 @@ impl Bag {
         tiles
     }
 
+
+    #[cfg(feature = "with_std")]
     pub fn to_str(&self) -> String {
         let mut res = format!("┌─────{:<03}/100─────┐\n", self.distribution.len());
 
@@ -101,6 +104,7 @@ impl Bag {
         res
     }
 
+    #[cfg(feature = "with_std")]
     pub fn to_str_for_current_player(&self, game: &Game) -> String {
         let mut d = self.distribution.clone();
         for i in game.get_player(((game.current + 1) % 2) as i32).rack.iter() {

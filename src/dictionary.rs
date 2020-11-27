@@ -1,18 +1,21 @@
 use crate::utils::to_word;
 use crate::utils::ALPH;
-use indicatif::ProgressBar;
-use indicatif::ProgressIterator;
+#[cfg(feature = "with_std")]
+use indicatif::{ProgressBar, ProgressIterator};
 use petgraph::graph::{Edges, NodeIndex};
 use petgraph::visit::EdgeRef;
 use petgraph::Direction;
 use petgraph::{Directed, Graph}; // todo use daggy?
+#[cfg(feature = "with_std")]
 use rayon::prelude::*;
+#[cfg(feature = "with_std")]
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+#[cfg(feature = "with_std")]
 use std::fs;
 
+#[cfg(feature = "with_std")]
 fn load_from_file<T: DeserializeOwned + Serialize>(file: &str, callback: fn() -> T) -> T {
     match fs::read(file) {
         Ok(b) => {
@@ -42,12 +45,19 @@ pub struct Dictionary {
 }
 
 impl Dictionary {
+    #[cfg(not(feature = "with_std"))]
+    pub fn default() -> Dictionary {
+        let b = include_bytes!("../dict.ser");
+        bincode::deserialize(b).unwrap()
+    }
+    #[cfg(feature = "with_std")]
     pub fn default() -> Dictionary {
         load_from_file("dict.ser", || {
             let mut dict = Dictionary {
                 words: HashMap::new(),
                 leaves: HashMap::new(),
             };
+
             for i in ALPH.chars().progress() {
                 if i == '?' {
                     continue;
@@ -122,6 +132,12 @@ pub struct Trie {
 }
 
 impl Trie {
+    #[cfg(not(feature = "with_std"))]
+    pub fn default() -> Trie {
+        let b = include_bytes!("../trie.ser");
+        bincode::deserialize(b).unwrap()
+    }
+    #[cfg(feature = "with_std")]
     pub fn default() -> Trie {
         load_from_file("trie.ser", || {
             let mut graph = Graph::new();
